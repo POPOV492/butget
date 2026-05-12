@@ -16,13 +16,14 @@ namespace butgem
         private Button addButton;
         private Button removeButton;
         private Button updateButton;
+        private Button clearButton;
         private ListBox transactionsListBox;
         private Label totalLabel;
 
         public BudgetForm()
         {
             this.Text = "Управление бюджетом";
-            this.Width = 600;
+            this.Width = 620;
             this.Height = 500;
             this.StartPosition = FormStartPosition.CenterScreen;
 
@@ -82,10 +83,19 @@ namespace butgem
             };
             updateButton.Click += (s, e) => UpdateTransaction();
 
+            clearButton = new Button
+            {
+                Location = new Point(340, 40),
+                Text = "Очистить всё",
+                Width = 100,
+                BackColor = Color.LightYellow
+            };
+            clearButton.Click += (s, e) => ClearAllTransactions();
+
             transactionsListBox = new ListBox
             {
                 Location = new Point(10, 80),
-                Width = 560,
+                Width = 580,
                 Height = 250
             };
 
@@ -99,7 +109,7 @@ namespace butgem
 
             this.Controls.AddRange(new Control[] {
                 descriptionTextBox, amountTextBox, typeComboBox, datePicker,
-                addButton, removeButton, updateButton,
+                addButton, removeButton, updateButton, clearButton,
                 transactionsListBox, totalLabel
             });
 
@@ -121,6 +131,19 @@ namespace butgem
 
         private void AddTransaction()
         {
+            if (datePicker.Value > DateTime.Now.AddDays(1))
+            {
+                MessageBox.Show("Дата не может быть в будущем!", "Ошибка",
+                    MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+            if (datePicker.Value < new DateTime(2000, 1, 1))
+            {
+                MessageBox.Show("Дата не может быть ранее 2000 года!", "Ошибка",
+                    MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
             if (!ValidateInput(out decimal amount, out TransactionType type)) return;
             budgetManager.AddTransaction(new Transaction(descriptionTextBox.Text, amount, type, datePicker.Value));
             RefreshList();
@@ -156,20 +179,43 @@ namespace butgem
             MessageBox.Show("Транзакция обновлена!");
         }
 
+        private void ClearAllTransactions()
+        {
+            if (budgetManager.Transactions.Count == 0)
+            {
+                MessageBox.Show("Список транзакций уже пуст!");
+                return;
+            }
+            if (MessageBox.Show("Удалить все транзакции?", "Подтверждение",
+                MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
+            {
+                while (budgetManager.Transactions.Count > 0)
+                {
+                    budgetManager.RemoveTransaction(budgetManager.Transactions[0]);
+                }
+                RefreshList();
+                MessageBox.Show("Все транзакции удалены!");
+            }
+        }
+
         private bool ValidateInput(out decimal amount, out TransactionType type)
         {
             amount = 0;
             type = TransactionType.Доход;
+
             if (string.IsNullOrWhiteSpace(descriptionTextBox.Text))
             {
                 MessageBox.Show("Введите описание!");
                 return false;
             }
-            if (!decimal.TryParse(amountTextBox.Text, out amount) || amount <= 0)
+
+            string cleanedAmount = amountTextBox.Text.Replace(" ", "");
+            if (!decimal.TryParse(cleanedAmount, out amount) || amount <= 0)
             {
                 MessageBox.Show("Введите корректную сумму (>0)!");
                 return false;
             }
+
             type = typeComboBox.SelectedIndex == 0 ? TransactionType.Доход : TransactionType.Расход;
             return true;
         }
