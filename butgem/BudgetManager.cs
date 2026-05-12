@@ -23,18 +23,27 @@ namespace butgem
 
         public void AddTransaction(Transaction transaction)
         {
+            if (transaction == null)
+                throw new ArgumentNullException(nameof(transaction));
+
             Transactions.Add(transaction);
             SaveTransactions();
         }
 
         public void RemoveTransaction(Transaction transaction)
         {
+            if (transaction == null)
+                throw new ArgumentNullException(nameof(transaction));
+
             Transactions.Remove(transaction);
             SaveTransactions();
         }
 
         public void UpdateTransaction(Transaction transaction, string newDescription, decimal newAmount, TransactionType newType)
         {
+            if (transaction == null)
+                throw new ArgumentNullException(nameof(transaction));
+
             transaction.Description = newDescription;
             transaction.Amount = newAmount;
             transaction.Type = newType;
